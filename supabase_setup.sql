@@ -125,6 +125,9 @@ DO $$ BEGIN
   DROP POLICY IF EXISTS "exams_select"       ON exams;
   DROP POLICY IF EXISTS "exams_all"          ON exams;
   DROP POLICY IF EXISTS "questions_deny"     ON questions;
+  DROP POLICY IF EXISTS "questions_write"    ON questions;
+  DROP POLICY IF EXISTS "questions_update"   ON questions;
+  DROP POLICY IF EXISTS "questions_delete"   ON questions;
   DROP POLICY IF EXISTS "attempts_select"    ON attempts;
   DROP POLICY IF EXISTS "attempts_insert"    ON attempts;
   DROP POLICY IF EXISTS "attempts_update"    ON attempts;
@@ -406,15 +409,18 @@ DECLARE v_total INTEGER; v_top10 INTEGER;
 BEGIN
   SELECT COUNT(*) INTO v_total FROM attempts WHERE user_id = p_user_id AND is_submitted = TRUE;
 
+  -- Count how many exams this user placed in the top 10
   WITH ranked AS (
-    SELECT l.exam_id, RANK() OVER (PARTITION BY l.exam_id ORDER BY l.score DESC, l.submitted_at ASC) AS rnk
+    SELECT
+      l.user_id,
+      l.exam_id,
+      RANK() OVER (PARTITION BY l.exam_id ORDER BY l.score DESC, l.submitted_at ASC) AS rnk
     FROM leaderboard l
     WHERE l.exam_id IN (SELECT exam_id FROM leaderboard WHERE user_id = p_user_id)
   )
-  SELECT COUNT(*) INTO v_top10 FROM ranked r
-  JOIN leaderboard lb ON lb.exam_id = r.exam_id AND lb.user_id = p_user_id
-  WHERE r.rnk <= 10 AND lb.user_id = p_user_id
-    AND EXISTS (SELECT 1 FROM ranked r2 WHERE r2.exam_id = r.exam_id AND r2.rnk <= 10);
+  SELECT COUNT(*) INTO v_top10
+  FROM ranked
+  WHERE user_id = p_user_id AND rnk <= 10;
 
   RETURN jsonb_build_object('total_exams', v_total, 'top10_count', COALESCE(v_top10, 0));
 END; $$;
