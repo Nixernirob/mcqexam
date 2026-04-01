@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin Panel — MCQ Exam System</title>
+  <meta name="robots" content="noindex, nofollow"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+  <link rel="stylesheet" href="css/admin.css"/>
+</head>
+<body>
+
+<!-- Toast -->
+<div id="toast-container"></div>
+
+<!-- ── Admin Login ───────────────────────────────────────────── -->
+<div id="admin-login">
+  <div class="login-card">
+    <div class="login-logo">🛡️</div>
+    <h1>Admin Panel</h1>
+    <p class="subtitle">MCQ Exam System — Restricted Access</p>
+
+    <div class="form-group" style="text-align:left">
+      <label class="form-label" for="login-username">Username</label>
+      <input class="form-input" type="text" id="login-username" placeholder="Enter username" autocomplete="username"/>
+    </div>
+    <div class="form-group" style="text-align:left">
+      <label class="form-label" for="login-password">Password</label>
+      <div style="position:relative">
+        <input class="form-input" type="password" id="login-password" placeholder="Enter password" autocomplete="current-password"/>
+        <button type="button" id="toggle-pw" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:1rem">
+          <i class="fas fa-eye"></i>
+        </button>
+      </div>
+    </div>
+    <div id="login-error" style="color:var(--danger);font-size:0.82rem;margin-bottom:12px;display:none;text-align:left">
+      <i class="fas fa-exclamation-circle"></i> <span></span>
+    </div>
+    <button class="btn btn-primary btn-full btn-lg" id="login-btn">
+      <i class="fas fa-sign-in-alt"></i> Login
+    </button>
+    <p style="margin-top:16px;font-size:0.75rem;color:var(--text-muted)">
+      <a href="index.html" style="color:var(--accent-light);text-decoration:none">← Back to Exam Portal</a>
+    </p>
+  </div>
+</div>
+
+<!-- ── Admin App (shown after login) ──────────────────────────── -->
+<div id="admin-app">
+
+  <!-- Mobile menu button -->
+  <button class="mobile-menu-btn" id="mobile-menu-btn"><i class="fas fa-bars"></i></button>
+  <!-- Sidebar overlay for mobile -->
+  <div id="sidebar-overlay" style="display:none;position:fixed;inset:0;z-index:90;background:rgba(0,0,0,0.5)" ></div>
+
+  <!-- Sidebar -->
+  <aside class="admin-sidebar" id="admin-sidebar">
+    <div class="admin-sidebar-logo">
+      <div class="logo-icon">🛡️</div>
+      <h2>Admin Panel</h2>
+      <p>MCQ Exam System</p>
+    </div>
+
+    <nav class="admin-nav">
+      <div class="admin-nav-item active" data-section="dashboard">
+        <span class="nav-icon"><i class="fas fa-chart-line"></i></span> Dashboard
+      </div>
+      <div class="admin-nav-item" data-section="create-exam">
+        <span class="nav-icon"><i class="fas fa-plus-circle"></i></span> Create Exam
+      </div>
+      <div class="admin-nav-item" data-section="manage-exams">
+        <span class="nav-icon"><i class="fas fa-list-alt"></i></span> Manage Exams
+      </div>
+      <div class="admin-nav-item" data-section="questions">
+        <span class="nav-icon"><i class="fas fa-question-circle"></i></span> Questions
+      </div>
+      <div class="admin-nav-item" data-section="users">
+        <span class="nav-icon"><i class="fas fa-users"></i></span> Users
+      </div>
+    </nav>
+
+    <div class="admin-nav-bottom">
+      <div class="admin-user-info">
+        <div class="admin-avatar" id="admin-avatar-initial">A</div>
+        <div>
+          <div class="username" id="admin-username-display">Admin</div>
+          <div class="role">Administrator</div>
+        </div>
+      </div>
+      <div class="admin-nav-item" data-section="settings">
+        <span class="nav-icon"><i class="fas fa-cog"></i></span> Settings
+      </div>
+      <div class="admin-nav-item" id="admin-logout-btn">
+        <span class="nav-icon"><i class="fas fa-sign-out-alt"></i></span> Logout
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main content -->
+  <main class="admin-main">
+
+    <!-- Dashboard -->
+    <section class="admin-section active" id="section-dashboard">
+      <div class="section-header">
+        <div><h2>Dashboard</h2><p>Overview of the exam system</p></div>
+      </div>
+      <div class="admin-stats" id="dashboard-stats">
+        <div class="admin-stat-card glass-card"><div class="stat-icon">📝</div><div class="stat-val" id="stat-total-exams">—</div><div class="stat-lbl">Total Exams</div></div>
+        <div class="admin-stat-card glass-card"><div class="stat-icon">🔴</div><div class="stat-val" id="stat-live-exams">—</div><div class="stat-lbl">Live Exams</div></div>
+        <div class="admin-stat-card glass-card"><div class="stat-icon">👥</div><div class="stat-val" id="stat-total-users">—</div><div class="stat-lbl">Total Users</div></div>
+        <div class="admin-stat-card glass-card"><div class="stat-icon">📊</div><div class="stat-val" id="stat-total-attempts">—</div><div class="stat-lbl">Total Attempts</div></div>
+      </div>
+      <div class="glass-card" style="padding:24px">
+        <h3 style="margin-bottom:16px"><i class="fas fa-bolt" style="color:var(--success)"></i> Currently Live Exams</h3>
+        <div id="dash-live-list"><div class="loading-center"><div class="spinner"></div><span>Loading…</span></div></div>
+      </div>
+    </section>
+
+    <!-- Create Exam -->
+    <section class="admin-section" id="section-create-exam">
+      <div class="section-header">
+        <div><h2>Create Exam</h2><p>Set up a new MCQ exam</p></div>
+      </div>
+      <div class="glass-card" style="padding:28px">
+        <form class="admin-form" id="create-exam-form">
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Exam Name *</label>
+              <input class="form-input" type="text" id="exam-name" placeholder="e.g. Physics Mid-Term 2025" required/>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Subject *</label>
+              <input class="form-input" type="text" id="exam-subject" placeholder="e.g. Physics" required/>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Topic / Chapter *</label>
+            <input class="form-input" type="text" id="exam-topic" placeholder="e.g. Chapter 3 — Motion" required/>
+          </div>
+          <div class="form-row-3">
+            <div class="form-group">
+              <label class="form-label">Duration (minutes) *</label>
+              <input class="form-input" type="number" id="exam-duration" min="1" max="300" value="30" required/>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Live Duration (hours) *</label>
+              <input class="form-input" type="number" id="exam-live-duration" min="1" value="48" required/>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Marks per Question</label>
+              <input class="form-input" type="number" id="exam-marks" min="0.25" step="0.25" value="1" required/>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Negative Marking (marks deducted per wrong answer, 0 for none)</label>
+            <input class="form-input" type="number" id="exam-negative" min="0" step="0.25" value="0"/>
+          </div>
+          <button type="submit" class="btn btn-primary btn-lg">
+            <i class="fas fa-save"></i> Create Exam &amp; Add Questions
+          </button>
+        </form>
+      </div>
+    </section>
+
+    <!-- Manage Exams -->
+    <section class="admin-section" id="section-manage-exams">
+      <div class="section-header">
+        <div><h2>Manage Exams</h2><p>Control exam status and view details</p></div>
+        <button class="btn btn-ghost btn-sm" id="refresh-exams-btn"><i class="fas fa-sync"></i> Refresh</button>
+      </div>
+      <div class="exam-list" id="admin-exam-list">
+        <div class="loading-center"><div class="spinner"></div><span>Loading…</span></div>
+      </div>
+    </section>
+
+    <!-- Questions -->
+    <section class="admin-section" id="section-questions">
+      <div class="section-header">
+        <div><h2>Question Builder</h2><p>Add and manage exam questions</p></div>
+      </div>
+
+      <div class="glass-card" style="padding:20px;margin-bottom:20px">
+        <label class="form-label">Select Exam</label>
+        <select class="form-select" id="q-exam-select" style="max-width:400px">
+          <option value="">— Choose an exam —</option>
+        </select>
+      </div>
+
+      <div id="question-builder-area" style="display:none">
+        <!-- Existing questions list -->
+        <div class="glass-card" style="padding:24px;margin-bottom:20px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+            <h3>Questions <span id="q-count-badge" style="font-size:0.8rem;background:rgba(99,102,241,0.2);color:var(--accent-light);padding:2px 10px;border-radius:20px;margin-left:8px">0</span></h3>
+            <button class="btn btn-primary btn-sm" id="add-question-btn">
+              <i class="fas fa-plus"></i> Add Question
+            </button>
+          </div>
+          <div class="question-list" id="question-list">
+            <div class="loading-center"><div class="spinner"></div><span>Loading questions…</span></div>
+          </div>
+        </div>
+
+        <!-- Add/Edit question form (hidden by default) -->
+        <div class="question-form-card" id="question-form-area" style="display:none">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px">
+            <h3 id="q-form-title"><i class="fas fa-plus"></i> New Question</h3>
+            <button class="btn btn-ghost btn-sm" id="cancel-question-btn"><i class="fas fa-times"></i> Cancel</button>
+          </div>
+
+          <input type="hidden" id="edit-question-id"/>
+
+          <div class="form-group">
+            <label class="form-label">Question Text * (supports Bangla, English, HTML sup/sub, $LaTeX$)</label>
+            <div class="math-toolbar">
+              <button class="math-btn" type="button" data-insert="<sup></sup>">x²</button>
+              <button class="math-btn" type="button" data-insert="<sub></sub>">₂</button>
+              <button class="math-btn" type="button" data-insert="$\frac{}{} $">fraction</button>
+              <button class="math-btn" type="button" data-insert="$\sqrt{} $">√</button>
+              <button class="math-btn" type="button" data-insert="$\pi $">π</button>
+              <button class="math-btn" type="button" data-insert="$\alpha $">α</button>
+              <button class="math-btn" type="button" data-insert="$\beta $">β</button>
+              <button class="math-btn" type="button" data-insert="$\Delta $">Δ</button>
+              <button class="math-btn" type="button" data-insert="°">°</button>
+            </div>
+            <textarea class="form-textarea" id="q-question-text" rows="4"
+              placeholder="Type your question here. Supports Bangla, English, and math ($x^2$ or $\frac{a}{b}$)"></textarea>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Question Image (optional)</label>
+            <div class="image-upload-area" id="image-upload-area">
+              <input type="file" id="q-image-file" accept="image/*"/>
+              <div class="upload-icon">📷</div>
+              <p>Click to upload an image, or drag & drop</p>
+              <p style="font-size:0.7rem;margin-top:4px">PNG, JPG, GIF up to 5MB</p>
+            </div>
+            <input type="hidden" id="q-image-url"/>
+            <img id="q-image-preview" class="image-preview" style="display:none" alt="Preview"/>
+            <button class="btn btn-ghost btn-sm" id="remove-image-btn" style="margin-top:8px;display:none">
+              <i class="fas fa-trash"></i> Remove Image
+            </button>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Options * (supports Bangla, English, math)</label>
+            <div class="options-grid">
+              <div class="option-input-group">
+                <div class="option-label opt-a">A</div>
+                <input class="form-input" type="text" id="opt-a" placeholder="Option A"/>
+              </div>
+              <div class="option-input-group">
+                <div class="option-label opt-b">B</div>
+                <input class="form-input" type="text" id="opt-b" placeholder="Option B"/>
+              </div>
+              <div class="option-input-group">
+                <div class="option-label opt-c">C</div>
+                <input class="form-input" type="text" id="opt-c" placeholder="Option C"/>
+              </div>
+              <div class="option-input-group">
+                <div class="option-label opt-d">D</div>
+                <input class="form-input" type="text" id="opt-d" placeholder="Option D"/>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Correct Answer *</label>
+            <div class="correct-answer-selector">
+              <label class="correct-radio-label"><input type="radio" name="correct-opt" value="a"/> <span class="option-label opt-a" style="width:24px;height:24px;font-size:0.75rem">A</span> Option A</label>
+              <label class="correct-radio-label"><input type="radio" name="correct-opt" value="b"/> <span class="option-label opt-b" style="width:24px;height:24px;font-size:0.75rem">B</span> Option B</label>
+              <label class="correct-radio-label"><input type="radio" name="correct-opt" value="c"/> <span class="option-label opt-c" style="width:24px;height:24px;font-size:0.75rem">C</span> Option C</label>
+              <label class="correct-radio-label"><input type="radio" name="correct-opt" value="d"/> <span class="option-label opt-d" style="width:24px;height:24px;font-size:0.75rem">D</span> Option D</label>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Question Order</label>
+            <input class="form-input" type="number" id="q-order" min="0" value="0" style="max-width:120px"/>
+          </div>
+
+          <div style="display:flex;gap:10px">
+            <button class="btn btn-primary" id="save-question-btn">
+              <i class="fas fa-save"></i> Save Question
+            </button>
+            <button class="btn btn-ghost" id="cancel-question-btn-2">
+              <i class="fas fa-times"></i> Cancel
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Users -->
+    <section class="admin-section" id="section-users">
+      <div class="section-header">
+        <div><h2>Users</h2><p>All registered users and their statistics</p></div>
+        <button class="btn btn-ghost btn-sm" id="refresh-users-btn"><i class="fas fa-sync"></i> Refresh</button>
+      </div>
+      <div class="glass-card">
+        <div class="users-table-wrap">
+          <table class="users-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Joined</th>
+                <th>Total Attempts</th>
+                <th>Live Attempts</th>
+                <th>Avg Score</th>
+              </tr>
+            </thead>
+            <tbody id="users-table-body">
+              <tr><td colspan="7"><div class="loading-center"><div class="spinner"></div><span>Loading…</span></div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- Settings -->
+    <section class="admin-section" id="section-settings">
+      <div class="section-header">
+        <div><h2>Settings</h2><p>Manage admin accounts</p></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;max-width:800px">
+
+        <div class="glass-card" style="padding:24px">
+          <h3 style="margin-bottom:18px"><i class="fas fa-key"></i> Change Password</h3>
+          <div class="form-group">
+            <label class="form-label">Old Password</label>
+            <input class="form-input" type="password" id="old-password"/>
+          </div>
+          <div class="form-group">
+            <label class="form-label">New Password</label>
+            <input class="form-input" type="password" id="new-password"/>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Confirm New Password</label>
+            <input class="form-input" type="password" id="confirm-password"/>
+          </div>
+          <button class="btn btn-primary" id="change-pw-btn">
+            <i class="fas fa-save"></i> Update Password
+          </button>
+        </div>
+
+        <div class="glass-card" style="padding:24px">
+          <h3 style="margin-bottom:18px"><i class="fas fa-user-plus"></i> Add New Admin</h3>
+          <div class="form-group">
+            <label class="form-label">Username</label>
+            <input class="form-input" type="text" id="new-admin-username"/>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Password</label>
+            <input class="form-input" type="password" id="new-admin-password"/>
+          </div>
+          <button class="btn btn-success" id="add-admin-btn">
+            <i class="fas fa-user-plus"></i> Add Admin
+          </button>
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+</div><!-- end #admin-app -->
+
+<!-- Supabase -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/config.js"></script>
+<script src="js/admin/adminAuth.js"></script>
+<script src="js/admin/examManager.js"></script>
+<script src="js/admin/questionBuilder.js"></script>
+<script src="js/admin/userViewer.js"></script>
+<script src="js/admin/adminApp.js"></script>
+
+</body>
+</html>
