@@ -455,11 +455,36 @@ VALUES
 ON CONFLICT (username) DO NOTHING;
 
 -- ============================================================
--- STORAGE SETUP NOTE
--- ============================================================
--- Go to Supabase Dashboard → Storage → Create Bucket:
---   Name: question-images
---   Public: YES  (enable public access)
+-- STORAGE RLS POLICIES (run AFTER creating question-images bucket)
 -- ============================================================
 
-SELECT 'Setup complete! 2 admins seeded. Create Storage bucket manually.' AS status;
+-- Drop old policies if re-running
+DO $$ BEGIN
+  DROP POLICY IF EXISTS "storage_public_read" ON storage.objects;
+  DROP POLICY IF EXISTS "storage_insert"      ON storage.objects;
+  DROP POLICY IF EXISTS "storage_update"      ON storage.objects;
+  DROP POLICY IF EXISTS "storage_delete"      ON storage.objects;
+EXCEPTION WHEN OTHERS THEN NULL;
+END $$;
+
+CREATE POLICY "storage_public_read"
+  ON storage.objects FOR SELECT
+  TO anon, authenticated
+  USING (bucket_id = 'question-images');
+
+CREATE POLICY "storage_insert"
+  ON storage.objects FOR INSERT
+  TO anon, authenticated
+  WITH CHECK (bucket_id = 'question-images');
+
+CREATE POLICY "storage_update"
+  ON storage.objects FOR UPDATE
+  TO anon, authenticated
+  USING (bucket_id = 'question-images');
+
+CREATE POLICY "storage_delete"
+  ON storage.objects FOR DELETE
+  TO anon, authenticated
+  USING (bucket_id = 'question-images');
+
+SELECT 'Setup complete! 2 admins seeded. Storage policies applied.' AS status;
